@@ -5,7 +5,6 @@ pipeline {
         REPO_URL = 'https://github.com/aemde/a433-microservices.git'
         BRANCH = 'proyek-pertama'
         IMAGE_NAME = 'aemde/item-app'
-        IMAGE_TAG = '' // Akan diatur secara dinamis berdasarkan BUILD_NUMBER
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // ID credentials untuk Docker Hub
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
     }
@@ -20,9 +19,9 @@ pipeline {
         stage('Initialize Environment') {
             steps {
                 script {
-                    // Menentukan tag versi berdasarkan build number
-                    IMAGE_TAG = "v${env.BUILD_NUMBER}"
-                    echo "Image tag akan digunakan: ${IMAGE_TAG}"
+                    // Dynamically set the image tag based on build number
+                    env.IMAGE_TAG = "v${env.BUILD_NUMBER}"
+                    echo "Image tag to be used: ${env.IMAGE_TAG}"
                 }
             }
         }
@@ -55,10 +54,10 @@ pipeline {
             steps {
                 echo 'Pushing Docker image to Docker Hub...'
                 withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+                    sh '''
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
                         docker push ${IMAGE_NAME}:${IMAGE_TAG}
-                    """
+                    '''
                 }
             }
         }
@@ -66,11 +65,11 @@ pipeline {
         stage('Deploy with Docker Compose') {
             steps {
                 echo 'Deploying application using Docker Compose...'
-                sh """
-                    sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' ${DOCKER_COMPOSE_FILE}
+                sh '''
+                    sed -i "s|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|" ${DOCKER_COMPOSE_FILE}
                     docker-compose down || true
                     docker-compose up -d
-                """
+                '''
             }
         }
     }
