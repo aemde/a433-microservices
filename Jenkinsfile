@@ -5,7 +5,7 @@ pipeline {
         REPO_URL = 'https://github.com/aemde/a433-microservices.git'
         BRANCH = 'proyek-pertama'
         IMAGE_NAME = 'aemde/item-app'
-        IMAGE_TAG = 'v1'
+        IMAGE_TAG = '' // Akan diatur secara dinamis berdasarkan BUILD_NUMBER
         DOCKER_CREDENTIALS_ID = 'docker-hub-credentials' // ID credentials untuk Docker Hub
         DOCKER_COMPOSE_FILE = 'docker-compose.yml'
     }
@@ -17,6 +17,16 @@ pipeline {
     }
 
     stages {
+        stage('Initialize Environment') {
+            steps {
+                script {
+                    // Menentukan tag versi berdasarkan build number
+                    IMAGE_TAG = "v${env.BUILD_NUMBER}"
+                    echo "Image tag akan digunakan: ${IMAGE_TAG}"
+                }
+            }
+        }
+
         stage('Clean Workspace') {
             steps {
                 cleanWs()
@@ -57,6 +67,7 @@ pipeline {
             steps {
                 echo 'Deploying application using Docker Compose...'
                 sh """
+                    sed -i 's|image: ${IMAGE_NAME}:.*|image: ${IMAGE_NAME}:${IMAGE_TAG}|' ${DOCKER_COMPOSE_FILE}
                     docker-compose down || true
                     docker-compose up -d
                 """
