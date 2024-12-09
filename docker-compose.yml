@@ -1,17 +1,22 @@
 version: '3.8'
 
 services:
+  # Service untuk aplikasi
   item-app:
-    image: aemde/item-app:v1
+    image: aemde/item-app:v1  # Menggunakan image aplikasi dengan tag v1 dari Docker Hub
     ports:
-      - "80:8080"
+      - "80:8080"  # Mapping port: localhost:80 -> container:8080
     depends_on:
-      - item-db
+      - item-db  # Menentukan bahwa service ini bergantung pada item-db
+    restart: always  # Mengatur agar container selalu restart jika terhenti
 
+  # Service untuk database MongoDB
   item-db:
-    image: mongo:3
+    image: mongo:3  # Menggunakan image MongoDB versi 3 dari Docker Hub
     volumes:
-      - app-db:/data/db
+      - app-db:/data/db  # Menyimpan data database secara persisten di volume bernama app-db
+    restart: always  # Mengatur agar container selalu restart jika terhenti
 
 volumes:
+  # Volume untuk menyimpan data database secara persisten
   app-db:
